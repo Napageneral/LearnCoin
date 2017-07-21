@@ -3,14 +3,6 @@ from order_book import OrderBook
 import time
 import json
 from decimal import Decimal
-
-'''
-class MySeriesHelper(influxdb.SeriesHelper):
-   class Meta:
-      db = mydb
-      series_name = 'events'
-'''    
-      
       
 def main():
    mydb = influxdb.InfluxDBClient(database='new')
