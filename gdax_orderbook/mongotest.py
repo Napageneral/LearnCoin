@@ -23,45 +23,37 @@ class MongoOrderBook(OrderBook):
          super(MongoOrderBook, self).remove(order)
          
          if order['reason'] == 'canceled':
-               self.collection.insert_one({"measurement":"cancel",
-                                   "fields":{
+               self.collection.insert_one({"type":"cancel",
                                        "price": float(order['price']),
                                        "size": -float(order.get('size') or order['remaining_size']),
                                        "side": order['side'],
-                                       "time": order['time']
-                                    },
+                                       "time": order['time'],
                                     })
          
       def match(self, order):
          super(MongoOrderBook, self).match(order)
-         self.collection.insert_one({"measurement":"match",
-                                 "fields":{
+         self.collection.insert_one({"type":"match",
                                     "price": float(order['price']),
                                     "size": -float(order.get('size') or order['remaining_size']),
                                     "side": order['side'],
-                                    "time": order['time']
-                                 },
+                                    "time": order['time'],
                                })
    
       def add(self, order):
          super(MongoOrderBook, self).add(order)
          
          if not 'time' in order:
-            self.collection.insert_one({"measurement":"message",
-                                 "fields":{
+            self.collection.insert_one({"type":"message",
                                     "price": float(order['price']),
                                     "size": float(order.get('size') or order['remaining_size']),
                                     "side": order['side'],
-                                    },
                                  })
          else:
-            self.collection.insert_one({"measurement":"order",
-                                    "fields":{
+            self.collection.insert_one({"type":"order",
                                        "price": float(order['price']),
                                        "size": float(order.get('size') or order['remaining_size']),
                                        "side": order['side'],
-                                       "time": order['time']
-                                       },
+                                       "time": order['time'],
                                     })
     
 def main():
