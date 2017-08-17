@@ -59,7 +59,7 @@ class MongoOrderBook(OrderBook):
 def main():
 
    client = pymongo.MongoClient("mongodb://127.0.0.1:27017")	
-   things = ['ETH-USD', 'BTC-USD', 'LTC-USD', 'ETH-BTC', 'LTC-BTC']
+   things = ['ETH-USD', 'BTC-USD', 'LTC-USD', 'LTC-EUR', 'BTC-EUR', 'ETH-EUR', 'BTC-GBP', 'ETH-BTC', 'LTC-BTC']
    threads = []
    for thing in things:
       ob = MongoOrderBook(client, product_id=thing)
