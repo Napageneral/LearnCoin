@@ -3,19 +3,14 @@ from order_book import OrderBook
 import datetime, time
 import json
 from decimal import Decimal
-      
-def main():
+import threading
 
-   client = pymongo.MongoClient("mongodb://127.0.0.1:27017")	
-   #mydb = client.gdaxTick
-    #mydb = influxdb.InfluxDBClient()
-   
-   class MongoOrderBook(OrderBook):
+class MongoOrderBook(OrderBook):
       
-      def __init__(self, product_id=None):
+      def __init__(self, client, product_id='BTC-USD'):
          super(MongoOrderBook, self).__init__(product_id=product_id)
          self.dbname = "gdax"
-         self.collection_name = datetime.datetime.now().strftime('%Y-%m-%d %H-%M-%S')
+         self.collection_name = ''.join(product_id.split('-'))#"BTCUSD" #datetime.datetime.now().strftime('%Y_%m_%d_%H_%M_%S')
          self.mydb = client[self.dbname]
          self.collection = self.mydb[self.collection_name]
          print("init Mongoorderbook")
@@ -28,7 +23,7 @@ def main():
          super(MongoOrderBook, self).remove(order)
          
          if order['reason'] == 'canceled':
-               self.collection.insert_one({"measurement":"message",
+               self.collection.insert_one({"measurement":"cancel",
                                    "fields":{
                                        "price": float(order['price']),
                                        "size": -float(order.get('size') or order['remaining_size']),
@@ -39,7 +34,7 @@ def main():
          
       def match(self, order):
          super(MongoOrderBook, self).match(order)
-         self.collection.insert_one({"measurement":"message",
+         self.collection.insert_one({"measurement":"match",
                                  "fields":{
                                     "price": float(order['price']),
                                     "size": -float(order.get('size') or order['remaining_size']),
@@ -60,7 +55,7 @@ def main():
                                     },
                                  })
          else:
-            self.collection.insert_one({"measurement":"message",
+            self.collection.insert_one({"measurement":"order",
                                     "fields":{
                                        "price": float(order['price']),
                                        "size": float(order.get('size') or order['remaining_size']),
@@ -68,19 +63,17 @@ def main():
                                        "time": order['time']
                                        },
                                     })
-         '''
-         fields = {
-            'side': order['side'],
-            'size': float(order.get('size') or order['remaining_size']),
-            'price': float(order['price'])
-         }
-         
-         print("add: side:"+str(order['side']) + " size: " + str(float(order.get('size') or order['remaining_size'])) + " price: " + str(float(order['price'])))
-         mydb.write_points([{"measurement":"add", "fields":fields}])
-         '''
-   ob = MongoOrderBook()
-   
-   ob.start()
+    
+def main():
+
+   client = pymongo.MongoClient("mongodb://127.0.0.1:27017")	
+   things = ['ETH-USD', 'BTC-USD', 'LTC-USD', 'ETH-BTC', 'LTC-BTC']
+   threads = []
+   for thing in things:
+      ob = MongoOrderBook(client, product_id=thing)
+      obt = threading.Thread(target=ob.start)
+      threads.append(obt)
+      obt.start()
    #time.sleep(100)
    #ob.close()
 
